@@ -22,8 +22,8 @@ export const useFeedbackStore = defineStore('feedback', {
 
       try {
         await new Promise((resolve) => setTimeout(resolve, 1000)) // simulate delay
-        const response = await axios.get('http://localhost:3001/api/feedback')
-        this.feedbackList = response.data
+        const response = await axios.get('http://localhost:8080/feedback')
+        this.feedbackList = response.data !== null ? response.data : []
       } catch (err) {
         this.error = err
         throw err
@@ -36,7 +36,7 @@ export const useFeedbackStore = defineStore('feedback', {
       this.createError = null
       try {
         await new Promise((resolve) => setTimeout(resolve, 1000)) // simulate delay
-        const response = await axios.post('http://localhost:3001/api/feedback', payload)
+        const response = await axios.post('http://localhost:8080/feedback', payload)
       } catch (err) {
         this.createError = err.response.data.error || 'Submission failed'
         throw err
@@ -49,7 +49,7 @@ export const useFeedbackStore = defineStore('feedback', {
       this.editError = null
       try {
         await new Promise((resolve) => setTimeout(resolve, 1000)) // simulate delay
-        const response = await axios.put(`http://localhost:3001/api/feedback/${id}`, payload)
+        const response = await axios.put(`http://localhost:8080/feedback/${id}`, payload)
       } catch (err) {
         this.editError = err.response.data.error || 'Submission failed'
         throw err
@@ -62,7 +62,7 @@ export const useFeedbackStore = defineStore('feedback', {
       this.deleteError = null
       try {
         await new Promise((resolve) => setTimeout(resolve, 1000)) // simulate delay
-        const response = await axios.delete(`http://localhost:3001/api/feedback/${id}`)
+        const response = await axios.delete(`http://localhost:8080/feedback/${id}`)
       } catch (err) {
         this.deleteError = err.response.data.error || 'Delete failed'
         throw err
