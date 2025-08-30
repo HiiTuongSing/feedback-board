@@ -1,12 +1,14 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useFeedbackStore } from '../stores/feedback'
+import { useAuthStore } from '@/stores/auth'
 import CreateFeedbackModal from '@/components/CreateFeedbackModal.vue'
 import EditFeedbackModal from '@/components/EditFeedbackModal.vue'
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue'
 import { useToast } from 'vue-toastification'
 
 const feedbackStore = useFeedbackStore()
+const authStore = useAuthStore()
 const toast = useToast()
 
 const editObj = ref(null)
@@ -68,6 +70,17 @@ function handleShowDeleteModal(obj) {
   deleteObj.value = obj
 }
 
+async function handleLogout(){
+  try{
+    await authStore.logout();
+    toast.success('Logout success!', {
+      timeout: 2000,
+    })
+  }catch(err){
+    console.error(err);
+  }
+}
+
 async function handleEdit({ title, message }) {
   const id = editObj.value.id
   const payload = {
@@ -122,6 +135,12 @@ onMounted(() => {
           :disabled="feedbackStore.isLoading"
         >
           Create
+        </button>
+        <button
+          class="px-4 py-1 rounded-md text-black"
+          @click="handleLogout"
+        >
+          logout
         </button>
       </div>
       <div

@@ -1,12 +1,14 @@
-// routes/feedbackRoutes.js
 const express = require('express');
+const authenticateToken = require('../middleware/jwt');
 const router = express.Router();
 const {
   createFeedback,
   getFeedbackList,
   updateFeedback,
   removeFeedback,
-} = require('../controllers/feedbackController');
+} = require('../controllers/feedback');
+
+router.use(authenticateToken);
 
 router.post('/', createFeedback);
 router.get('/', getFeedbackList);

@@ -7,7 +7,7 @@ const db = new sqlite3.Database(path.resolve(__dirname, 'feedback.db'));
 // create table if it doesnt exist
 db.serialize(() => {
   db.run(`
-    CREATE TABLE IF NOT EXIST users (
+    CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       username TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
@@ -17,10 +17,11 @@ db.serialize(() => {
   `)
 
   db.run(`
-    CREATE TABLE IF NOT EXIST refresh_tokens (
+    CREATE TABLE IF NOT EXISTS refresh_tokens (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL,
       token TEXT NOT NULL,
+      device_id TEXT NOT NULL,
       expires_at DATETIME NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(user_id) REFERENCES users(id)
