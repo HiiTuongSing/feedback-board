@@ -44,6 +44,7 @@ async function findRefreshToken(token) {
 
 async function verifyRefreshToken(token) {
   const record = await findRefreshToken(token)
+  console.log(record)
   if (!record) return null
 
   const now = new Date()
@@ -51,7 +52,7 @@ async function verifyRefreshToken(token) {
 
   if (expiresAt < now) {
     // expired, delete it
-    await revokeRefreshTokens(record.user_id, record.device_id)
+    await revokeRefreshTokenById(record.user_id)
     return null
   }
 

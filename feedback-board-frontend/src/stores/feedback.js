@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import axios from 'axios'
+
+import api from '@/services/apiService'
 
 export const useFeedbackStore = defineStore('feedback', {
   state: () => ({
@@ -22,7 +23,9 @@ export const useFeedbackStore = defineStore('feedback', {
 
       try {
         await new Promise((resolve) => setTimeout(resolve, 1000)) // simulate delay
-        const response = await axios.get('http://localhost:8080/feedback')
+        const response = await api.get(`/feedback`, {
+          withCredentials: true,
+        })
         this.feedbackList = response.data !== null ? response.data : []
       } catch (err) {
         this.error = err
@@ -36,7 +39,7 @@ export const useFeedbackStore = defineStore('feedback', {
       this.createError = null
       try {
         await new Promise((resolve) => setTimeout(resolve, 1000)) // simulate delay
-        const response = await axios.post('http://localhost:8080/feedback', payload)
+        const response = await api.post(`/feedback`, payload)
       } catch (err) {
         this.createError = err.response.data.error || 'Submission failed'
         throw err
@@ -49,7 +52,7 @@ export const useFeedbackStore = defineStore('feedback', {
       this.editError = null
       try {
         await new Promise((resolve) => setTimeout(resolve, 1000)) // simulate delay
-        const response = await axios.put(`http://localhost:8080/feedback/${id}`, payload)
+        const response = await api.put(`/feedback/${id}`, payload)
       } catch (err) {
         this.editError = err.response.data.error || 'Submission failed'
         throw err
@@ -62,7 +65,7 @@ export const useFeedbackStore = defineStore('feedback', {
       this.deleteError = null
       try {
         await new Promise((resolve) => setTimeout(resolve, 1000)) // simulate delay
-        const response = await axios.delete(`http://localhost:8080/feedback/${id}`)
+        const response = await api.delete(`/feedback/${id}`)
       } catch (err) {
         this.deleteError = err.response.data.error || 'Delete failed'
         throw err

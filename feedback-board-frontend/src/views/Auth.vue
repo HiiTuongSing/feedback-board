@@ -45,14 +45,18 @@ async function handleRegister(){
     const payload = { 
       username: username.value.trim(),
       password: password.value.trim(),
-      role: isAdmin ? 'admin' : 'user'
+      role: isAdmin.value ? 'admin' : 'user'
     }
 
     await authStore.register(payload)
+    toast.success('Register success!', {
+      timeout: 2000,
+    })
     username.value = '';
     password.value = '';
     verifyPassword.value = '';
     isAdmin.value = false;
+    isRegisterPage.value = false;
   }catch(err){
     toast.error(err, {
       timeout: 2000,
@@ -63,46 +67,67 @@ async function handleRegister(){
 
 <template>
   <div class="h-screen w-screen flex flex-col items-center justify-center">
-    <div v-if="!isRegisterPage">
-      <h1 class="text-3xl font-bold">Feedback Board</h1>
-      <br />
-      <p @click="isRegisterPage = true" class="text-sm text-blue-500 underline">Register</p>
-      <br />
-      <p class="text-2xl font-bold">Login</p>
+    <h1 class="text-3xl font-bold mb-8">Feedback Board</h1>
+    <div v-if="!isRegisterPage" class="border rounded p-8 bg-slate-100 border-slate-200 shadow-2xl">
+      <h2 class="text-2xl font-bold text-center mb-4">Login</h2>
       <form @submit.prevent="handleSubmit" class="flex flex-col gap-2">
-        <label for="username">Username</label>
-        <input id="username" type="text" v-model="username" class="border px-2" />
-
-        <label for="password">Password</label>
-        <input id="password" type="password" v-model="password" class="border px-2" />
-        <button type="submit" class="cursor-pointer bg-blue-100 hover:bg-blue-200 transition-500">
+        <div class="flex flex-col">
+          <label for="username">Username</label>
+          <input id="username" type="text" v-model="username" class="border px-2 border-slate-600 rounded py-1 bg-white" autocomplete="username"/>
+        </div>
+        
+        <div class="flex flex-col mb-4">
+          <label for="password">Password</label>
+          <input id="password" type="password" v-model="password" class="border px-2 border-slate-600 rounded py-1 bg-white" autocomplete="password" />
+        </div>
+        
+        <button type="submit" class="cursor-pointer bg-blue-200 hover:bg-blue-100 transition-500 px-2 py-1 rounded text-slate-700">
           {{ authStore.isLoggingIn ? 'Logging in...' : 'Login' }}
         </button>
+        <p @click="isRegisterPage = true" class="text-sm text-blue-500 hover:text-blue-800 underline text-center cursor-pointer select-none">Go to register</p>
       </form>
     </div>
 
-    <div v-else>
-      <h1 class="text-3xl font-bold">Feedback Board</h1>
-      <br />
-      <p @click="isRegisterPage = false" class="text-sm text-blue-500 underline">Login</p>
-      <br />
-      <p class="text-2xl font-bold">Register</p>
+    <div v-else class="border rounded p-8 bg-slate-100 border-slate-200 shadow-2xl">
+      <h2 class="text-2xl font-bold text-center mb-4">Register</h2>
       <form @submit.prevent="handleRegister" class="flex flex-col gap-2">
-        <label for="username">Username</label>
-        <input id="username" type="text" v-model="username" class="border px-2" />
+        <div class="flex flex-col">
+          <label for="username">Username</label>
+          <input id="username" type="text" v-model="username" class="border px-2 border-slate-600 rounded py-1 bg-white" autocomplete="new-username" />
+        </div>
 
-        <label for="password">Password</label>
-        <input id="password" type="password" v-model="password" class="border px-2" />
+        <div class="flex flex-col">
+          <label for="password">Password</label>
+          <input id="password" type="password" v-model="password" class="border px-2 border-slate-600 rounded py-1 bg-white" autocomplete="new-password" />
+        </div>
 
-        <label for="verify-password">Re-Enter Password</label>
-        <input id="verify-password" type="password" v-model="verifyPassword" class="border px-2" />
+        <div class="flex flex-col">
+          <label for="verify-password">Re-Enter Password</label>
+          <input id="verify-password" type="password" v-model="verifyPassword" class="border px-2 border-slate-600 rounded py-1 bg-white" autocomplete="new-password" />
+        </div>
 
-        <label for="role">Role</label>
-        <input id="role" type="checkbox" v-model="isAdmin" class="border px-2" />
-        <button type="submit" class="bg-blue-100 hover:bg-blue-200 transition-500" :class="{'cursor-pointer': isValid,'cursor-not-allowed opacity-50': !isValid}" :disabled="!isValid">
-          {{ authStore.isLoggingIn ? 'Submitting' : 'Register' }}
+        <div class="flex items-center gap-2">
+          <input id="role" type="checkbox" v-model="isAdmin" class="border border-slate-600 rounded" />
+          <label for="role">Admin Role</label>
+        </div>
+
+        <button
+          type="submit"
+          class="px-2 py-1 rounded transition-500 text-slate-600"
+          :class="{
+            'bg-blue-200 hover:bg-blue-100 cursor-pointer': isValid,
+            'bg-blue-200 cursor-not-allowed opacity-50': !isValid
+          }"
+          :disabled="!isValid"
+        >
+          {{ authStore.isLoggingIn ? 'Submitting...' : 'Register' }}
         </button>
+
+        <p @click="isRegisterPage = false" class="text-sm text-blue-500 hover:text-blue-800 underline cursor-pointer select-none text-center mt-2">
+          Back to Login
+        </p>
       </form>
     </div>
+
   </div>
 </template>

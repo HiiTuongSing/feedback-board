@@ -101,8 +101,6 @@ exports.logoutUser = async (req, res) => {
 
 exports.getUser = async(req, res) => {
   try{
-    console.log(req.cookies);         // all cookies
-    console.log(req.cookies.refreshToken); // specific
     const token = req.cookies.accessToken
     if (!token) {
       return res.status(401).json({ loggedIn: false })

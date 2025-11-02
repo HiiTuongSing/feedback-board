@@ -14,17 +14,19 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
+  if(to.name === 'Auth'){
+    return next()
+  }
+  
   const authStore = useAuthStore()
   await authStore.authCheck()
   const isAuthenticated = authStore.isLoggedIn
-  console.log(isAuthenticated)
 
   if(to.meta.requiresAuth && !isAuthenticated){
     return next({ name: 'Auth' })
   }
 
   if(to.meta.guestOnly && isAuthenticated){
-    console.log('test', to.meta.guestOnly)
     return next({ name: 'FeedbackBoard' })
   }
 

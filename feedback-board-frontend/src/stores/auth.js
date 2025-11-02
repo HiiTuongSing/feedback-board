@@ -1,12 +1,9 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
 import { v4 as uuidv4 } from 'uuid'
 import router from '@/router'
+import api from '@/services/apiService'
 
-const apiUrl = 'http://localhost:3001/api'
 const DEVICE_ID_KEY = 'device_id'
-
-axios.defaults.withCredentials = true
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -39,7 +36,7 @@ export const useAuthStore = defineStore('auth', {
         const deviceId = this.deviceId || this.initDeviceId()
 
         await new Promise((resolve) => setTimeout(resolve, 1000)) // simulate delay
-        const response = await axios.post(`${apiUrl}/auth/login`, {
+        const response = await api.post(`/auth/login`, {
           ...payload,
           deviceId, 
         })
@@ -63,7 +60,7 @@ export const useAuthStore = defineStore('auth', {
       this.registerError = null;
       
       try{
-        const response = await axios.post(`${apiUrl}/auth/register`, payload)
+        const response = await api.post(`/auth/register`, payload)
       }catch (err) {
         const message =
           err.response?.data?.error ||
@@ -79,7 +76,7 @@ export const useAuthStore = defineStore('auth', {
 
     async authCheck(){
       try{
-        const response = await axios.get(`${apiUrl}/auth/user`, {
+        const response = await api.get(`/auth/user`, {
           withCredentials: true,
         })
         this.isLoggedIn = true
@@ -90,13 +87,23 @@ export const useAuthStore = defineStore('auth', {
 
     async logout(){
       try{
-        const response = await axios.post(`${apiUrl}/auth/logout`, {
+        const response = await api.post(`/auth/logout`, {
           withCredentials: true,
         })
         this.isLoggedIn = false
         router.push({name: 'Auth'})
       }catch(err){
         this.isLoggedIn = true
+      }
+    },
+
+    async refreshToken(){
+      try{
+        const response = await api.post(`/auth/refresh`)
+      }catch(err){
+        this.isLoggedIn = false
+        router.push({name: 'Auth'})
+        console.error(err)
       }
     }
   },

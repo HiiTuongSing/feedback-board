@@ -9,5 +9,4 @@
 #Week-33
 - Research authentication system
 - Implement in express.js
-- Implement in GoLang
 - Create authentication pages in frontend
