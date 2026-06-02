@@ -3,10 +3,9 @@ package feedbackdb
 import(
 	"database/sql"
   "log"
-  "path/filepath"
   "time"
 
-  _ "modernc.org/sqlite"
+  _ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/google/uuid"
 )
 
@@ -22,19 +21,30 @@ type Feedback struct{
 var db *sql.DB
 
 func InitDB() {
-  dbpath, _ := filepath.Abs("feedback.db")
   var err error
-  db, err = sql.Open("sqlite", dbpath)
+
+  db, err = sql.Open(
+    "pgx",
+    "postgres://postgres:postgres@localhost:5432/feedback_db?sslmode=disable",
+  )
+
   if err != nil {
     log.Fatal("Failed to connect to database:", err)
   }
 
-  createTable := `CREATE TABLE IF NOT EXISTS feedback (
-		id TEXT PRIMARY KEY,
-		title TEXT NOT NULL,
-		message TEXT NOT NULL,
-		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-	)`
+  err = db.Ping()
+  if err != nil {
+    log.Fatal("Database not reachable:", err)
+  }
+
+  createTable := `
+    CREATE TABLE IF NOT EXISTS feedback (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      message TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `
 
   _, err = db.Exec(createTable)
   if err != nil {
@@ -46,7 +56,7 @@ func AddFeedback(title, message string) (*Feedback, error) {
   id := uuid.New().String()
 
   _, err := db.Exec(
-    `INSERT INTO feedback (id, title, message) VALUES (?, ?, ?)`,
+    `INSERT INTO feedback (id, title, message) VALUES ($1, $2, $3)`,
 		id, title, message,
   )
   if err != nil {
@@ -84,7 +94,7 @@ func GetAllFeedback() ([]Feedback, error) {
 
 func EditFeedback(id, title, message string) (bool, error) {
   res, err := db.Exec(
-    `UPDATE feedback SET title = ?, message = ? WHERE id = ?`,
+    `UPDATE feedback SET title = $1, message = $2 WHERE id = $3`,
 		title, message, id,
   )
   if err != nil{
@@ -96,7 +106,7 @@ func EditFeedback(id, title, message string) (bool, error) {
 }
 
 func DeleteFeedback(id string) (bool, error) {
-  res, err := db.Exec(`DELETE FROM feedback WHERE id = ?`, id)
+  res, err := db.Exec(`DELETE FROM feedback WHERE id = $1`, id)
   if err != nil{
     return false, err
   }

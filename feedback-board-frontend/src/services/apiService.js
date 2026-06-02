@@ -5,7 +5,7 @@ import { useToast } from 'vue-toastification'
 const toast = useToast()
 
 const api = axios.create({
-  baseURL: "http://localhost:3001/api",
+  baseURL: "http://localhost:8080",
   withCredentials: true, // ensures cookies get sent & received
 });
 
