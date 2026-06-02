@@ -49,7 +49,7 @@ exports.loginUser = async (req, res) => {
     const accessToken = createAccessToken({ id: user.id, role: user.role });
     const refreshToken = await createRefreshToken(user.id, deviceId);
 
-    res.cookie('refreshToken', refreshToken, {
+    res.cookie('refreshToken', refreshToken.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'Lax', //change to Strict in production if on same site

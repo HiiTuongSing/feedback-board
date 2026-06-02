@@ -1,21 +1,26 @@
 import axios from "axios";
 import router from "@/router";
-import { useToast } from 'vue-toastification'
+import { useToast } from "vue-toastification";
 
-const toast = useToast()
+const toast = useToast();
 
 const api = axios.create({
   baseURL: "http://localhost:3001/api/",
-  withCredentials: true, // ensures cookies get sent & received
+  withCredentials: true,
+});
+
+// IMPORTANT: separate instance for refresh to avoid interceptor loop
+const refreshApi = axios.create({
+  baseURL: "http://localhost:3001/api/",
+  withCredentials: true,
 });
 
 let isRefreshing = false;
 let failedQueue = [];
 
-// used to prevent calling the refresh multiple times
 function processQueue(error) {
-  failedQueue.forEach((prom) => {
-    error ? prom.reject(error) : prom.resolve();
+  failedQueue.forEach(({ resolve, reject }) => {
+    error ? reject(error) : resolve();
   });
   failedQueue = [];
 }
@@ -25,28 +30,38 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const status = error.response?.status;
+
+    // handle expired/invalid auth
+    if ([401, 403].includes(status) && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        }).then(() => api(originalRequest));
+          failedQueue.push({
+            resolve: () => resolve(api(originalRequest)),
+            reject,
+          });
+        });
       }
 
       originalRequest._retry = true;
       isRefreshing = true;
 
       try {
-        // Ask backend to refresh cookie
-        await api.post("/auth/refresh", {}, { withCredentials: true });
+        // refresh token (cookie-based)
+        await refreshApi.post("/auth/refresh");
 
         processQueue(null);
-        return api(originalRequest); // retry
+
+        return api(originalRequest);
       } catch (err) {
         processQueue(err);
-        router.push({name: 'Auth'})
-        toast.error('Invalid username or password!', {
+
+        toast.error("Session expired. Please login again.", {
           timeout: 2000,
-        })
+        });
+
+        router.push({ name: "Auth" });
+
         return Promise.reject(err);
       } finally {
         isRefreshing = false;
