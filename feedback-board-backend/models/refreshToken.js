@@ -1,62 +1,61 @@
-const db = require('../db/index')
-const { v4: uuidv4 } = require('uuid')
+const db = require('../db/index');
+const { v4: uuidv4 } = require('uuid');
 
 async function createRefreshToken(userId, deviceId) {
-  return new Promise((resolve, reject) => {
-    const id = uuidv4();
-    const token = uuidv4();
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
+  const id = uuidv4();
+  const token = uuidv4();
 
-    db.run(
-      `INSERT INTO refresh_tokens (id, user_id, token, device_id, expires_at) VALUES (?, ?, ?, ?, ?)`,
-      [id, userId, token, deviceId, expiresAt.toISOString()],
-      function (err) {
-        if (err) reject(err);
-        else resolve({ id, token, userId, deviceId, expiresAt });
-      }
-    );
-  });
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7);
+
+  await db.query(
+    `INSERT INTO refresh_tokens
+     (id, user_id, token, device_id, expires_at)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [id, userId, token, deviceId, expiresAt.toISOString()]
+  );
+
+  return { id, token, userId, deviceId, expiresAt };
 }
 
 async function revokeRefreshTokenById(tokenId) {
-  return new Promise((resolve, reject) => {
-    const query = `DELETE FROM refresh_tokens WHERE id = ?`;
-    db.run(query, [tokenId], function (err) {
-      if (err) return reject(err);
-      resolve(this.changes > 0); // true if a row was deleted
-    });
-  });
+  const result = await db.query(
+    `DELETE FROM refresh_tokens WHERE id = $1`,
+    [tokenId]
+  );
+
+  return result.rowCount > 0;
 }
 
 async function findRefreshToken(token) {
-  return new Promise((resolve, reject) => {
-    db.get(
-      `SELECT * FROM refresh_tokens WHERE token = ?`,
-      [token],
-      (err, row) => {
-        if (err) return reject(err)
-        resolve(row || null)
-      }
-    )
-  })
+  const result = await db.query(
+    `SELECT * FROM refresh_tokens WHERE token = $1`,
+    [token]
+  );
+
+  return result.rows[0] || null;
 }
 
 async function verifyRefreshToken(token) {
-  const record = await findRefreshToken(token)
-  console.log(record)
-  if (!record) return null
+  const record = await findRefreshToken(token);
 
-  const now = new Date()
-  const expiresAt = new Date(record.expires_at)
+  if (!record) return null;
+
+  const now = new Date();
+  const expiresAt = new Date(record.expires_at);
 
   if (expiresAt < now) {
     // expired, delete it
-    await revokeRefreshTokenById(record.user_id)
-    return null
+    await revokeRefreshTokenById(record.id); // FIXED (was record.user_id)
+    return null;
   }
 
-  return record
+  return record;
 }
 
-module.exports = { createRefreshToken, revokeRefreshTokenById, findRefreshToken, verifyRefreshToken };
+module.exports = {
+  createRefreshToken,
+  revokeRefreshTokenById,
+  findRefreshToken,
+  verifyRefreshToken,
+};

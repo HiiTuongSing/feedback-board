@@ -1,37 +1,30 @@
-const db = require('../db/index')
-const { v4: uuidv4 } = require('uuid')
-const { hashPassword } = require('../utils/hash')
+const db = require('../db/index');
+const { v4: uuidv4 } = require('uuid');
+const { hashPassword } = require('../utils/hash');
 
-async function createUser(username, password, role){
-  try{
-    const id = uuidv4()
-    const password_hash = await hashPassword(password)
-    return new Promise((resolve, reject) => {
-      db.run(
-        `INSERT INTO users (id, username, password_hash, role) VALUES (?, ?, ?, ?)`,
-        [id, username, password_hash, role],
-        function(err){
-          if(err) reject(err)
-            else resolve({id, username, role})
-        }
-      )
-    })
-  }catch(err){
-    throw err
-  }
+async function createUser(username, password, role = 'user') {
+  const id = uuidv4();
+  const password_hash = await hashPassword(password);
+
+  await db.query(
+    `INSERT INTO users (id, username, password_hash, role)
+     VALUES ($1, $2, $3, $4)`,
+    [id, username, password_hash, role]
+  );
+
+  return { id, username, role };
 }
 
-function getUserByUsername(username) {
-  return new Promise((resolve, reject) => {
-    db.get(
-      `SELECT * FROM users WHERE username = ?`,
-      [username],
-      (err, row) => {
-        if (err) reject(err);
-        else resolve(row); 
-      }
-    );
-  });
+async function getUserByUsername(username) {
+  const result = await db.query(
+    `SELECT * FROM users WHERE username = $1`,
+    [username]
+  );
+
+  return result.rows[0] || null;
 }
 
-module.exports = { createUser, getUserByUsername }
+module.exports = {
+  createUser,
+  getUserByUsername,
+};
